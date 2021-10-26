@@ -1,0 +1,58 @@
+# You can override the included template(s) by including variable overrides
+# SAST customization: https://docs.gitlab.com/ee/user/application_security/sast/#customizing-the-sast-settings
+# Secret Detection customization: https://docs.gitlab.com/ee/user/application_security/secret_detection/#customizing-settings
+# Note that environment variables can be set in several places
+# See https://docs.gitlab.com/ee/ci/variables/#priority-of-environment-variables
+stages:
+- build
+- test
+- final
+
+default:
+  before_script:
+    - echo "-> Starting a new job"
+    - TXT_GREEN="\e[32m" && TXT_CLEAR="\e[0m"
+
+include:
+- template: Security/SAST.gitlab-ci.yml
+
+
+build_say_my_name:
+  stage: build
+  before_script:
+  - echo "=> Greeting Jpec-sama before anybody else thanks to the 'needs' keyword in 'build_say_hello' job"
+  script: echo "こんにちはジペク様！"
+
+
+build_say_hello:
+  stage: build
+  needs: [build_say_my_name]
+  script: echo "Hello $GITLAB_USER_NAME from Pipeline B!👋"
+
+build_install_imagemagick:
+  stage: build
+  image: ubuntu:latest
+  tags:
+  - docker
+  script:
+  - pwd
+  - apt update >/dev/null 2>/dev/null
+  - which convert || echo "not installed"
+  - apt install -y imagemagick >/dev/null 2>/dev/null
+  - which convert || echo "not installed"
+
+test_task:
+  stage: test
+  script:
+    - echo "Running test task"
+    - which convert || exit 1
+
+final_task:
+  stage: final
+  script:    
+    - echo "Running final task"
+    - echo "This job deploys something for example. It will only run when "
+    - echo -e "${TXT_GREEN}All jobs in the test stage complete.${TXT_CLEAR}"
+
+# sast:
+#   stage: test

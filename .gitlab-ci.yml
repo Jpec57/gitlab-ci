@@ -1,0 +1,75 @@
+stages:
+  - build
+  - triggers
+  - deploy
+
+# Define when the CI should be runned
+workflow:
+  rules:
+    # Don't run CI if "-draft" is in the commit message,
+    # as it is run "never"
+    - if: $CI_COMMIT_MESSAGE =~ /-draft$/
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    # Run CI for all non-mentioned cases
+    - when: always
+
+
+variables:
+  ENVIRONMENT: jpec
+
+.only-default: &only-default
+  only:
+    - main
+    - master
+    - merge_requests
+    - tags
+
+build_common 1/2:
+  <<: *only-default
+  variables:
+    UPSTREAM_BRANCH: $CI_COMMIT_REF_NAME
+    COMMIT_DESC: $CI_COMMIT_DESCRIPTION
+  stage: build
+  script:
+    - echo "Setting up something common for both pipelines for branch $UPSTREAM_BRANCH..."
+    - echo "Commit => $COMMIT_DESC"
+
+build_common 2/2:
+  <<: *only-default
+  stage: build
+  script:
+    - echo "Ready to go further"
+
+
+trigger_a:
+  stage: triggers
+  trigger:
+    include: pipelines/pipeline_a/.gitlab-ci.yaml
+  when: manual
+
+trigger_b:
+  stage: triggers
+  trigger:
+    include: pipelines/pipeline_b/.gitlab-ci.yaml
+  when: manual
+
+merge_job:
+  stage: triggers
+  script: echo "This is a merge request."
+  only:
+    - merge_requests
+
+# Run for branches except those beginning with "fix-"
+fix_exception_job:
+  stage: triggers
+  script: echo "I will make an exception for you"
+  except: [/^fix-/]
+
+
+deploy_job:
+  stage: deploy
+  script:
+    - echo "DEPLOYING APP"
+  # Run the job only when triggered manually in GitLab UI
+  when: manual

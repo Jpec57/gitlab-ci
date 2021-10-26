@@ -1,0 +1,51 @@
+stages:
+- build
+- build_cleanup
+- final
+
+variables:
+  API_TOKEN: "default"
+
+build_a:
+  stage: build
+  script: 
+    - echo "API TOKEN $API_TOKEN"
+    - echo "Building pipeline A"
+    - echo "$BAD_VAR"
+    - echo "BAD_VAR=1" >> build.env
+    - echo "$BAD_VAR"
+  artifacts:
+    reports:
+      dotenv: build.env    
+
+build_a_after:
+  variables:
+    API_TOKEN: "secure"
+  stage: build
+  needs: 
+    - job: build_a
+      artifacts: true
+  script:
+    - echo "Running test task in env $ENVIRONMENT"
+    - echo "API TOKEN $API_TOKEN"
+    - echo "INHERITED BAD_VAR $BAD_VAR" 
+    - exit $BAD_VAR 
+  # If you comment this line final_a won't be launch 
+  # You can however force it to run by decommenting when: always
+  # BUT build_cleanup will be skip if this is not commented
+  # allow_failure: true
+
+on_fail: 
+  stage: build_cleanup 
+  script: echo -e "\e[31mI am a loser\e[0m"
+  # Run the job only when at least one job in an earlier stage fails.
+  when: on_failure
+
+final_a:
+  stage: final
+  script:    
+    - echo "Running final task"
+    - echo "This job deploys something for example. It will only run when "
+    - echo "all jobs in the test stage complete"
+  # Run the job regardless of the status of jobs in earlier stages.
+  when: always

@@ -12,7 +12,7 @@ workflow:
       when: never
     - if: '$CI_PIPELINE_SOURCE == "push"'
     # Run CI for all non-mentioned cases
-    - when: always
+      when: always
 
 
 variables:

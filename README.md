@@ -1,9 +1,45 @@
-# Set up
+# Why 
+
+- automatising tests on a *different* machine (or )
+- following the appliance of your project's guidelines (coverage, lints...)
+- automatising tasks like deploying to production 
+- be more secure about your code 
+- gain time (parallel build on several machines for instance)
+
+# When
+
+Building a CI is not time-consuming, in fact creating tests are. 
+
+In general, I would say that the main drawback from creating a CI for each project is the need of resources it demands
+and the cost it may produce.
+
+In very active projects, it offers you the ability to create value quicker as you are more confident about your code
+and less afraid at the idea of rewriting something.
+
+I would therefore recommend creating a CI for each project you want to actively maintain. For others, a simple test suite
+may be enough.
+
+# What 
+
+There is many solutions out there. The most famous are GitLab CI, CircleCI and GitHub Actions.
+While the choice between GitHub and Circle Ci may be easy as it depends on your project's location, CircleCI still
+is an option you shouldn't overlook.
+
+# How
 
 To use Gitlab CI, you must:
 
+- create a "runner" 
 - create a `.gitlab-ci.yml` file in the root directory
-- create a "runner" (https://docs.gitlab.com/runner/install/)
+
+... and you're done !
+
+## Create a runner
+
+Go to `Settings > CI/CI #Runners`
+And follow these instructions: https://docs.gitlab.com/runner/install/
+
+Eventually run the docker locally using https://stackoverflow.com/a/65920577
 
 ## Create a `.gitlab-ci.yml` file
 
@@ -15,6 +51,8 @@ stages:
 
 image: alpine
 
+#############################
+
 build_a:
   stage: build
   script:
@@ -24,6 +62,8 @@ build_b:
   stage: build
   script:
     - echo "This job builds something else."
+
+###############################
 
 test_a:
   stage: test
@@ -36,6 +76,8 @@ test_b:
   script:
     - echo "This job tests something else. It will only run when all jobs in the"
     - echo "build stage are complete too. It will start at about the same time as test_a."
+
+###############################
 
 deploy_a:
   stage: deploy
@@ -61,24 +103,30 @@ stages:
   - deploy
 ```
 
-With this part of code, we ensure that all tasks assigned to the `test` stage will run once all tasks in the previous `build` stage have been runned. Likewise, we want to run our `deploy` tasks after the `test` tasks have been runned.
+With this part of code, we ensure that all tasks assigned to the `test` stage will run once all tasks in the previous 
+`build` stage have been runned. Likewise, we want to run our `deploy` tasks after the `test` tasks have been runned.
 Note that all tasks in the same stage run concurrently.
 
 ![Pipeline process](imgs/pipeline.png)
 
-This behavior can be improved through DAG (Directed Acyclic Graph) or child/parents pipelines by waiting only for desired builds and bringing common behaviors together.
+This behavior can be improved through DAG [Directed Acyclic Graph](https://docs.gitlab.com/ee/ci/directed_acyclic_graph/)
+or child/parents pipelines by waiting only for desired builds and bringing common behaviors together.
 
 ![Dependencies through needs on same level](imgs/dependencies_needs.png)
 
 Finally, you can decide to cut into several steps one job by using a specific syntax:
+
 ![Job Step Syntax](imgs/job_step_syntax.png)
+
+
 ![Job Step](imgs/job_step.png)
 
 Source: https://docs.gitlab.com/ee/ci/pipelines/pipeline_architectures.html
 
 #### Smaller scale customization
 
-You can also add some scripts to be runned before or after a job, either before each one or before one specific job, with the ability to overwrite them.
+You can also add some scripts to be runned before or after a job, either before each one or before one specific job,
+with the ability to overwrite them.
 
 ![Default config](imgs/default_config.png)
 
@@ -86,16 +134,20 @@ You can also add some scripts to be runned before or after a job, either before 
 
 #### Decide when you run job
 
-Outside of the general pipeline process order, the keyword `when` enables the developer to define more granulary the workflow.
+Outside the general pipeline process order, the keyword `when` enables the developer to define with more granularity 
+the workflow.
 
-You can for instance use this to run a specific job **ONLY** when a job in a previous stage's job fails or **ONLY** when you decide to launch it through the gitlab CI.
-This can be useful to run cleanup code in case of a build error or to launch a deploy script through the UI once all the tests have passed (and are correct...).
+You can for instance use this to run a specific job **ONLY** when a job in a previous stage's job fails or **ONLY** 
+when you decide to launch it through the gitlab CI.
+This can be useful to run cleanup code in case of a build error or to launch a deployment script through the UI once
+all the tests have passed (and are correct...).
 
 ![On Failure syntax](imgs/on_failure.png)
 
 ![On fail triggered](imgs/on_fail_triggered.png)
 
-Finally, we can decide if the next stage should continue or not with the help of the `allow_failure` keyword or even the `when: always` statement.
+Finally, we can decide if the next stage should continue or not with the help of the `allow_failure` keyword or
+even the `when: always` statement.
 
 ### Variables
 
@@ -104,7 +156,8 @@ You can define global variables and override them at job's level:
 ![Variable definition](imgs/variables.png)
 
 Source: https://docs.gitlab.com/ee/ci/variables/
-Nevertheless, **to keep a CI/CD variable secret**, put it in the project settings, not in the .gitlab-ci.yml file. (Go to your project’s Settings > CI/CD and expand the Variables section.)
+Nevertheless, **to keep a CI/CD variable secret**, put it in the project settings, not in the .gitlab-ci.yml file.
+(Go to your project’s Settings > CI/CD and expand the Variables section.)
 
 A huge amount of predefined variables is available in GitLab to help the developer build customized experiences.
 
@@ -139,13 +192,6 @@ Source: https://docs.gitlab.com/ee/ci/variables/#pass-an-environment-variable-to
 
 Source: https://docs.gitlab.com/ee/user/application_security/sast/#customizing-the-sast-settings
 
-## Create a runner
-
-Go to `Settings > CI/CI #Runners` 
-And follow these instructions: https://docs.gitlab.com/runner/install/
-
-Eventually run the docker locally using https://stackoverflow.com/a/65920577
-
 
 ## Looking further
 
@@ -176,7 +222,8 @@ Yaml syntax to use a ref:
 
 ### Decide when your CI run
 
-You probably don't want to run the full CI for all branches (for instance feature branches). In this case, two options are available:
+You probably don't want to run the full CI for all branches (for instance feature branches). 
+In this case, two options are available:
 
 - `rules` keyword
 
